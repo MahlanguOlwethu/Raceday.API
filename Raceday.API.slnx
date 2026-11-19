@@ -4,5 +4,6 @@
     <File Path="dotnet.yml" />
   </Folder>
   <Project Path="../RaceDay.API.Tests/RaceDay.API.Tests.csproj" Id="4c951220-e407-4f90-9d7f-c9e05d902dcf" />
+  <Project Path="../RaceDay.MVC/RaceDay.MVC.csproj" Id="b8ebe98d-dffc-457a-8083-4fbd97bbace5" />
   <Project Path="RaceDay.API.csproj" />
 </Solution>
