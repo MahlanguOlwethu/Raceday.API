@@ -24,8 +24,8 @@ builder.Services.AddSession(options =>
 // 5. Register HttpClient to talk to the API
 builder.Services.AddHttpClient("RaceDayAPI", client =>
 {
-    // IMPORTANT: Change this port to match your API's HTTPS port from its launchSettings.json!
-    client.BaseAddress = new Uri("https://localhost:7082/");
+    // API base URL comes from configuration (Api:BaseUrl); defaults to the local dev API.
+    client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7082/");
 })
 .ConfigurePrimaryHttpMessageHandler(() =>
 {
