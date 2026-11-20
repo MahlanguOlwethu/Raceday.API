@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Raceday.API.Controllers;
 using RaceDay.API.Data;
@@ -48,6 +48,9 @@ namespace RaceDay.API.Tests.Controllers
             // Arrange
             var context = GetInMemoryDbContext();
             var controller = new AuthController(context);
+
+            // Login writes to HttpContext.Session, so the controller needs a (mock) session
+            SessionMockHelper.SetSessionData(controller, "0", "Participant");
 
             var registerDto = new RegisterDto { FirstName = "Jane", LastName = "Doe", Email = "jane@test.com", Password = "Password123!", Role = "Participant" };
             await controller.Register(registerDto);
