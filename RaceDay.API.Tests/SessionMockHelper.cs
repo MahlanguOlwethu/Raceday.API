@@ -26,7 +26,9 @@ namespace RaceDay.API.Tests
                         value = Encoding.UTF8.GetBytes(role);
                         return true;
                     }
-                    value = null;
+
+                    // FIXED: Added '!' to suppress the warning (null! is the null-forgiving operator)
+                    value = null!;
                     return false;
                 });
 

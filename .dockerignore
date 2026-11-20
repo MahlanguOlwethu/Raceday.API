@@ -1,6 +1,9 @@
 **/bin/
 **/obj/
 **/.vs/
-.git
-.github
-docs
+**/.git/
+**/.github/
+**/*.user
+.env
+docs/
+RaceDay.API.Tests/
