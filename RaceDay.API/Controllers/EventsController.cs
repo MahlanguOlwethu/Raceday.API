@@ -119,9 +119,12 @@ namespace RaceDayAPI.Controllers
 
             string? bannerUrl = null;
 
-            // If an image was uploaded, send it to Azure Blob Storage
+            // If an image was uploaded, validate it and send it to Azure Blob Storage
             if (BannerImage != null && BannerImage.Length > 0)
             {
+                var imageError = ImageUploadRules.Validate(BannerImage);
+                if (imageError != null) return BadRequest(new { message = imageError });
+
                 bannerUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
             }
 
@@ -168,6 +171,9 @@ namespace RaceDayAPI.Controllers
             // Only replace the banner when a new image is supplied; otherwise keep the existing one
             if (BannerImage != null && BannerImage.Length > 0)
             {
+                var imageError = ImageUploadRules.Validate(BannerImage);
+                if (imageError != null) return BadRequest(new { message = imageError });
+
                 existingEvent.BannerImageUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
             }
 

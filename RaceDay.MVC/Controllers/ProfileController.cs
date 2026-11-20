@@ -77,11 +77,19 @@ namespace RaceDay.MVC.Controllers
                 return RedirectToAction("Index");
             }
 
+            var imageError = ImageRules.Validate(model.ProfilePictureFile);
+            if (imageError != null)
+            {
+                TempData["ErrorMessage"] = imageError;
+                return RedirectToAction("Index");
+            }
+
             var client = _apiService.GetClient();
 
             using var content = new MultipartFormDataContent();
             var fileContent = new StreamContent(model.ProfilePictureFile.OpenReadStream());
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.ProfilePictureFile.ContentType);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+                string.IsNullOrWhiteSpace(model.ProfilePictureFile.ContentType) ? "application/octet-stream" : model.ProfilePictureFile.ContentType);
 
             content.Add(fileContent, "file", model.ProfilePictureFile.FileName);
 

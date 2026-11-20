@@ -34,6 +34,7 @@ else
         <table class="table table-hover align-middle mb-0">
             <thead class="table-dark">
                 <tr>
+                    <th>Banner</th>
                     <th>Event Name</th>
                     <th>Date</th>
                     <th>Location</th>
@@ -45,6 +46,16 @@ else
                 @foreach (var ev in Model)
                 {
                     <tr>
+                        <td style="width: 90px;">
+                            @if (!string.IsNullOrEmpty(ev.BannerImageUrl))
+                            {
+                                <img src="@ev.BannerImageUrl" alt="@ev.Name banner" class="rounded" style="width: 80px; height: 48px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted small">No banner</span>
+                            }
+                        </td>
                         <td class="fw-bold">@ev.Name</td>
                         <td>@ev.EventDate.ToString("dd MMM yyyy")</td>
                         <td>@ev.Location</td>

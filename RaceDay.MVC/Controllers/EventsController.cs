@@ -74,6 +74,12 @@ namespace RaceDay.MVC.Controllers
         public async Task<IActionResult> Create(CreateEventViewModel model)
         {
             if (CurrentUserRole != "Organiser") return RedirectToAction("Index", "Home");
+
+            if (model.BannerImage != null && model.BannerImage.Length > 0)
+            {
+                var imageError = ImageRules.Validate(model.BannerImage);
+                if (imageError != null) ModelState.AddModelError(nameof(model.BannerImage), imageError);
+            }
             if (!ModelState.IsValid) return View(model);
 
             var client = _apiService.GetClient();
@@ -130,7 +136,13 @@ namespace RaceDay.MVC.Controllers
         public async Task<IActionResult> Edit(EditEventViewModel model)
         {
             if (CurrentUserRole != "Organiser") return RedirectToAction("Index", "Home");
-            if (!ModelState.IsValid) return View(model);
+
+            if (model.BannerImage != null && model.BannerImage.Length > 0)
+            {
+                var imageError = ImageRules.Validate(model.BannerImage);
+                if (imageError != null) ModelState.AddModelError(nameof(model.BannerImage), imageError);
+            }
+            if (!ModelState.IsValid) return await ReloadEditViewAsync(model);
 
             var client = _apiService.GetClient();
             using var content = BuildEventContent(model);
@@ -144,6 +156,21 @@ namespace RaceDay.MVC.Controllers
             }
 
             ModelState.AddModelError("", "Failed to update event. Please try again.");
+            return await ReloadEditViewAsync(model);
+        }
+
+        // A failed POST does not carry the existing banner URL back, so fetch it again
+        // before re-rendering the form; otherwise the current banner disappears from the page.
+        private async Task<IActionResult> ReloadEditViewAsync(EditEventViewModel model)
+        {
+            var response = await _apiService.GetClient().GetAsync($"api/events/{model.EventId}");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var ev = JsonSerializer.Deserialize<EventDetailsViewModel>(json, options);
+                model.ExistingBannerUrl = ev?.BannerImageUrl;
+            }
             return View(model);
         }
 
@@ -181,7 +208,8 @@ namespace RaceDay.MVC.Controllers
             if (model.BannerImage != null && model.BannerImage.Length > 0)
             {
                 var fileContent = new StreamContent(model.BannerImage.OpenReadStream());
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.BannerImage.ContentType);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+                    string.IsNullOrWhiteSpace(model.BannerImage.ContentType) ? "application/octet-stream" : model.BannerImage.ContentType);
                 content.Add(fileContent, "BannerImage", model.BannerImage.FileName);
             }
 

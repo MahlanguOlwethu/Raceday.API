@@ -79,6 +79,9 @@ namespace RaceDay.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "No file provided." });
 
+            var imageError = ImageUploadRules.Validate(file);
+            if (imageError != null) return BadRequest(new { message = imageError });
+
             var userId = GetLoggedInUserId();
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
