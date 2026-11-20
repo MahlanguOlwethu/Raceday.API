@@ -3,6 +3,17 @@
     ViewData["Title"] = Model.Name;
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger mt-3">@TempData["ErrorMessage"]</div>
+}
+
+<!-- Banner image stored in Azure Blob Storage (URL saved by the API) -->
+@if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+{
+    <img src="@Model.BannerImageUrl" alt="@Model.Name banner" class="img-fluid rounded shadow-sm w-100 mt-4" style="max-height: 320px; object-fit: cover;" />
+}
+
 <div class="row mt-4">
     <div class="col-md-8">
         <h2>@Model.Name</h2>
@@ -31,11 +42,14 @@
                                     <strong>@cat.Name</strong><br />
                                     <small>@cat.CategoryType</small>
                                 </div>
-                                <form asp-controller="Enrolments" asp-action="Enrol" method="post">
-                                    <input type="hidden" name="eventId" value="@Model.EventId" />
-                                    <input type="hidden" name="categoryId" value="@cat.CategoryId" />
-                                    <button type="submit" class="btn btn-sm btn-success">Enrol</button>
-                                </form>
+                                @if (ViewBag.UserRole == "Participant")
+                                {
+                                    <form asp-controller="Enrolments" asp-action="Enrol" method="post">
+                                        <input type="hidden" name="eventId" value="@Model.EventId" />
+                                        <input type="hidden" name="categoryId" value="@cat.CategoryId" />
+                                        <button type="submit" class="btn btn-sm btn-success">Enrol</button>
+                                    </form>
+                                }
                             </li>
                         }
                     </ul>
