@@ -31,6 +31,9 @@ namespace RaceDay.API.Controllers
         {
             var organiserId = GetLoggedInUserId();
 
+            if (dto.FinishPosition < 1)
+                return BadRequest(new { message = "Finish position must be 1 or higher." });
+
             // 1. Verify event exists and belongs to organiser
             var eventEntity = await _context.Events.FindAsync(eventId);
             if (eventEntity == null) return NotFound(new { message = "Event not found." });
@@ -42,6 +45,16 @@ namespace RaceDay.API.Controllers
                 .FirstOrDefaultAsync(e => e.EnrolmentId == dto.EnrolmentId && e.EventId == eventId);
             if (enrolment == null)
                 return NotFound(new { message = "Enrolment not found for this event." });
+
+            // Cancelled entries never started or were withdrawn, so they cannot have a result
+            if (enrolment.Status == "Cancelled")
+                return BadRequest(new { message = "Cannot capture a result for a cancelled enrolment." });
+
+            // Finishing positions must be unique within an event
+            var positionTaken = await _context.Results
+                .AnyAsync(r => r.Enrolment!.EventId == eventId && r.FinishPosition == dto.FinishPosition);
+            if (positionTaken)
+                return Conflict(new { message = "That finishing position has already been awarded for this event." });
 
             // 3. Check if a result already exists
             var existingResult = await _context.Results.AnyAsync(r => r.EnrolmentId == dto.EnrolmentId);
@@ -141,6 +154,7 @@ namespace RaceDay.API.Controllers
                     r.ResultId,
                     EventName = r.Enrolment!.Event!.Name,
                     EventDate = r.Enrolment.Event.EventDate,
+                    CategoryName = r.Enrolment.Category!.Name,
                     r.FinishTime,
                     r.FinishPosition,
                     // Count how many results exist for this specific event
