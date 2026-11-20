@@ -1,0 +1,37 @@
+﻿@model IEnumerable<RaceDay.MVC.ViewModels.EventViewModel>
+@{
+    ViewData["Title"] = "Browse Events";
+}
+
+<h2 class="mb-4">Upcoming Events</h2>
+
+<div class="row">
+    @foreach (var ev in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                @if (!string.IsNullOrEmpty(ev.BannerImageUrl))
+                {
+                    <img src="@ev.BannerImageUrl" class="card-img-top" alt="@ev.Name" style="height: 200px; object-fit: cover;">
+                }
+                else
+                {
+                    <div class="bg-secondary text-white text-center d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <h4>No Banner</h4>
+                    </div>
+                }
+                <div class="card-body">
+                    <h5 class="card-title">@ev.Name</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@ev.EventType (@ev.DistanceKm km)</h6>
+                    <p class="card-text text-truncate">@ev.Description</p>
+                    <ul class="list-unstyled mb-3">
+                        <li><strong>📅 Date:</strong> @ev.EventDate.ToString("dd MMM yyyy")</li>
+                        <li><strong>📍 Location:</strong> @ev.Location</li>
+                        <li><strong>🏆 Categories:</strong> @ev.CategoryCount</li>
+                    </ul>
+                    <a asp-action="Details" asp-route-id="@ev.EventId" class="btn btn-primary w-100">View Details & Enrol</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

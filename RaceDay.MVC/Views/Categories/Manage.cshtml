@@ -1,0 +1,140 @@
+﻿@model IEnumerable<RaceDay.MVC.ViewModels.CategoryViewModel>
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Manage Categories</h2>
+    <a asp-controller="Events" asp-action="MyEvents" class="btn btn-outline-secondary">Back to My Events</a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- Left Side: List of existing categories -->
+    <div class="col-md-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Existing Categories</h5>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Any())
+                {
+                    <p class="p-3 mb-0 text-muted">No categories added yet. Add one on the right!</p>
+                }
+                else
+                {
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cat in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@cat.Name</td>
+                                    <td>@cat.CategoryType</td>
+                                    <td>
+                                        @if (cat.CategoryType == "Distance")
+                                        {
+                                            <span>@cat.DistanceKm km</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Ages @cat.MinAge to @cat.MaxAge</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Form to add a new category -->
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Add New Category</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <!-- Hidden field to pass the eventId to the controller -->
+                    <input type="hidden" name="eventId" value="@ViewBag.EventId" />
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" name="Name" class="form-control" placeholder="e.g. 10km Run, or Junior" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Category Type</label>
+                        <select name="CategoryType" class="form-select" id="categoryTypeSelect">
+                            <option value="Distance">Distance</option>
+                            <option value="Age">Age Group</option>
+                        </select>
+                    </div>
+
+                    <!-- These fields show if Distance is selected -->
+                    <div id="distanceFields" class="form-group mb-3">
+                        <label class="form-label">Distance (km)</label>
+                        <input type="number" step="0.1" name="DistanceKm" class="form-control" />
+                    </div>
+
+                    <!-- These fields show if Age is selected -->
+                    <div id="ageFields" class="form-group mb-3" style="display: none;">
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label">Min Age</label>
+                                <input type="number" name="MinAge" class="form-control" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Max Age</label>
+                                <input type="number" name="MaxAge" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Add Category</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Simple JS to toggle between Distance and Age fields based on dropdown
+        document.getElementById('categoryTypeSelect').addEventListener('change', function () {
+            var distanceFields = document.getElementById('distanceFields');
+            var ageFields = document.getElementById('ageFields');
+
+            if (this.value === 'Distance') {
+                distanceFields.style.display = 'block';
+                ageFields.style.display = 'none';
+            } else {
+                distanceFields.style.display = 'none';
+                ageFields.style.display = 'block';
+            }
+        });
+    </script>
+}

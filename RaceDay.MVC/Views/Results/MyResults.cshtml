@@ -1,0 +1,45 @@
+﻿@model IEnumerable<System.Text.Json.JsonElement>
+@{
+    ViewData["Title"] = "My Results";
+}
+
+<h2 class="mb-4">My Race History</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info shadow-sm">
+        You don't have any results yet. Once an organiser records your finish time, it will appear here!
+    </div>
+}
+else
+{
+    <div class="table-responsive shadow-sm">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Finish Time</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var finishTime = item.GetProperty("finishTime").GetString();
+                    var position = item.GetProperty("finishPosition").GetInt32();
+                    var totalFinishers = item.GetProperty("totalFinishers").GetInt32();
+
+                    <tr>
+                        <td class="fw-bold">@item.GetProperty("eventName").GetString()</td>
+                        <td>@item.GetProperty("eventDate").GetDateTime().ToString("dd MMM yyyy")</td>
+                        <td>@item.GetProperty("categoryName").GetString()</td>
+                        <td><span class="badge bg-primary fs-6">@finishTime</span></td>
+                        <td><strong>@position</strong> <span class="text-muted">out of @totalFinishers</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

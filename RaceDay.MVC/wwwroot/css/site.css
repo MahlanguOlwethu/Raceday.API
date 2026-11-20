@@ -1,0 +1,62 @@
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+body {
+    margin-bottom: 60px;
+    background-color: #f8f9fa; /* Light grey background */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* RaceDay Brand Colors */
+.bg-raceday {
+    background-color: #ff6b00 !important; /* Energetic Orange */
+}
+
+.text-raceday {
+    color: #ff6b00 !important;
+}
+
+.btn-primary {
+    background-color: #ff6b00;
+    border-color: #ff6b00;
+}
+
+    .btn-primary:hover {
+        background-color: #e65c00;
+        border-color: #e65c00;
+    }
+
+/* Card hover effect for events */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+
+/* Status Badges */
+.badge-confirmed {
+    background-color: #198754; /* Bootstrap Success */
+    color: white;
+}
+
+.badge-pending {
+    background-color: #ffc107; /* Bootstrap Warning */
+    color: #212529;
+}
+
+.badge-cancelled {
+    background-color: #dc3545; /* Bootstrap Danger */
+    color: white;
+}
