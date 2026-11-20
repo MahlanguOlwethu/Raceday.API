@@ -41,6 +41,16 @@
                 session.SetString(SessionKey, string.Join("; ", jar.Select(p => p.Key + "=" + p.Value)));
             }
 
+            // The MVC app thinks the user is logged in, but the API says they are not
+            // (e.g. the API restarted and lost its sessions). End the MVC session too,
+            // so BaseController can send the user back to the login page.
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized &&
+                session != null && !string.IsNullOrEmpty(session.GetString("UserRole")))
+            {
+                session.Clear();
+                _accessor.HttpContext!.Items["ApiSessionExpired"] = true;
+            }
+
             return response;
         }
     }

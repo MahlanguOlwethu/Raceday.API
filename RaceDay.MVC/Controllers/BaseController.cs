@@ -19,5 +19,17 @@ namespace RaceDay.MVC.Controllers
             ViewBag.UserRole = CurrentUserRole;
             ViewBag.UserName = CurrentUserName;
         }
+
+        public override void OnActionExecuted(ActionExecutedContext context)
+        {
+            base.OnActionExecuted(context);
+
+            // Set by ApiSessionHandler when the API session has ended
+            if (HttpContext.Items.ContainsKey("ApiSessionExpired"))
+            {
+                TempData["ErrorMessage"] = "Your session has expired. Please log in again.";
+                context.Result = RedirectToAction("Login", "Auth");
+            }
+        }
     }
 }
