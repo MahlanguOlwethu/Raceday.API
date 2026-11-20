@@ -51,7 +51,7 @@ namespace RaceDay.MVC.Controllers
                 var enrolmentsJson = await enrolmentsResponse.Content.ReadAsStringAsync();
                 var enrolmentsData = JsonSerializer.Deserialize<List<JsonElement>>(enrolmentsJson);
 
-                foreach (var item in enrolmentsData)
+                foreach (var item in enrolmentsData ?? new List<JsonElement>())
                 {
                     var status = item.GetProperty("status").GetString();
                     if (status == "Confirmed")
