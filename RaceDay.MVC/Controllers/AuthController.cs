@@ -40,7 +40,8 @@ namespace RaceDay.MVC.Controllers
 
                 // Store user info in MVC Session
                 HttpContext.Session.SetString("UserRole", result.GetProperty("role").GetString() ?? "Unknown");
-                HttpContext.Session.SetString("UserName", result.GetProperty("userName").GetString() ?? dto.Email);
+                HttpContext.Session.SetString("UserName", dto.Email);
+                HttpContext.Session.SetInt32("UserId", result.GetProperty("userId").GetInt32());
 
                 return RedirectToAction("Index", "Home");
             }
