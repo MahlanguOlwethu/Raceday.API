@@ -1,4 +1,4 @@
-﻿# Use the official ASP.NET Core runtime as a parent image
+# Use the official ASP.NET Core runtime as a parent image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
@@ -8,7 +8,6 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["RaceDay.MVC/RaceDay.MVC.csproj", "RaceDay.MVC/"]
-COPY ["RaceDay.API/RaceDay.API.csproj", "RaceDay.API/"]
 RUN dotnet restore "RaceDay.MVC/RaceDay.MVC.csproj"
 COPY . .
 WORKDIR "/src/RaceDay.MVC"
