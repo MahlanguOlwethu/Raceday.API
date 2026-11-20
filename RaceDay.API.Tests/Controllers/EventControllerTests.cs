@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
 using RaceDay.API.Security;
+using RaceDay.API.Services;
 using RaceDayAPI.Controllers;
 using Xunit;
 
@@ -22,20 +24,29 @@ namespace RaceDay.API.Tests.Controllers
             return new RaceDayDbContext(options);
         }
 
+        // BlobService needs an IConfiguration to be constructed. These tests never
+        // upload an image (BannerImage is null), so an empty in-memory config is enough
+        // and no real Azure connection is made.
+        private BlobService GetBlobService()
+        {
+            var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
+            return new BlobService(config);
+        }
+
         [Fact]
         public async Task CreateEvent_AsOrganiser_ReturnsCreated()
         {
             // Arrange
             var context = GetInMemoryDbContext();
-            var controller = new EventsController(context);
+            var controller = new EventsController(context, GetBlobService());
 
             // Mock the session so the controller thinks an Organiser is logged in
             SessionMockHelper.SetSessionData(controller, "1", "Organiser");
 
             var dto = new CreateEventDto { Name = "Test Run", EventType = "Run", DistanceKm = 5.0m, EventDate = DateTime.UtcNow.AddDays(10), Location = "Park", Description = "Desc" };
 
-            // Act
-            var result = await controller.CreateEvent(dto);
+            // Act (no banner image uploaded)
+            var result = await controller.CreateEvent(dto, null);
 
             // Assert
             var objectResult = result as ObjectResult;
@@ -48,7 +59,7 @@ namespace RaceDay.API.Tests.Controllers
         {
             // Arrange
             var context = GetInMemoryDbContext();
-            var controller = new EventsController(context);
+            var controller = new EventsController(context, GetBlobService());
 
             // Mock session as Participant
             SessionMockHelper.SetSessionData(controller, "2", "Participant");
