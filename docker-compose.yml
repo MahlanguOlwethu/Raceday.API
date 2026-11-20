@@ -1,13 +1,30 @@
+# Start everything with ONE command from the repository root:
+#     docker compose up --build
+# MVC web app:   http://localhost:5000
+# API + Swagger: http://localhost:5001/swagger
+#
+# Values come from a .env file next to this one (see .env.example). Every value has a
+# default, so the stack also starts without a .env; image uploads then return a friendly
+# "could not upload" message until AZURE_STORAGE_CONNECTION_STRING is set.
+
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: raceday-db
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrong@Password123!"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:-RaceDay!Local2026}
     ports:
       - "1433:1433"
+    volumes:
+      - raceday-sql:/var/opt/mssql
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   api:
     build:
@@ -15,14 +32,16 @@ services:
       dockerfile: RaceDay.API/Dockerfile
     container_name: raceday-api
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "5001:8080"
     environment:
+      # Development turns on the Swagger UI
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:8080"
-      ConnectionStrings__DefaultConnection: ${SQL_CONNECTION_STRING}
-      AzureBlob__ConnectionString: ${AZURE_STORAGE_CONNECTION_STRING}
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=RaceDayDb;User Id=sa;Password=${SA_PASSWORD:-RaceDay!Local2026};TrustServerCertificate=True;"
+      AzureBlob__ConnectionString: ${AZURE_STORAGE_CONNECTION_STRING:-}
     restart: unless-stopped
 
   mvc:
@@ -37,5 +56,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://+:8080"
+      # Containers reach each other by service name, not localhost
       ApiSettings__BaseUrl: http://api:8080/
     restart: unless-stopped
+
+volumes:
+  raceday-sql:
