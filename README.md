@@ -10,6 +10,10 @@ category and track their results.
 | 2 | ASP.NET Core Web API (`RaceDay.API`) with EF Core, session auth, Swagger and xUnit tests (`RaceDay.API.Tests`) |
 | 3 | ASP.NET Core MVC app (`RaceDay.MVC`) that consumes the API, Azure Blob Storage, Docker |
 
+## Video presentation
+
+Unlisted YouTube video: https://youtu.be/8N_ivb0XRZo
+
 ## Roles
 
 * **Organiser:** dashboard (events, enrolments per event, upcoming dates), create/edit/delete events with a banner image,
