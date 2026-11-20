@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RaceDay.MVC.ViewModels;
 using RaceDay.MVC.Services;
 using System.Text;
@@ -86,8 +86,22 @@ namespace RaceDay.MVC.Controllers
                 return RedirectToAction("Login");
             }
 
-            var error = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError("", $"Registration failed: {error}");
+            // Show the API's friendly "message" when present, never the raw JSON/error body
+            var message = "Registration failed. Please check your details and try again.";
+            try
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(error);
+                if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                    doc.RootElement.TryGetProperty("message", out var m) &&
+                    m.ValueKind == JsonValueKind.String)
+                {
+                    message = m.GetString() ?? message;
+                }
+            }
+            catch (JsonException) { }
+
+            ModelState.AddModelError("", message);
             return View(dto);
         }
     }
