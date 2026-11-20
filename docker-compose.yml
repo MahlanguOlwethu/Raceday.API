@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: RaceDay.API/Dockerfile
+    container_name: raceday-api
+    ports:
+      - "5001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development      # keeps Swagger enabled
+      ConnectionStrings__DefaultConnection: ${SQL_CONNECTION_STRING}
+      AzureBlob__ConnectionString: ${AZURE_STORAGE_CONNECTION_STRING}
+    restart: unless-stopped
+
+  mvc:
+    build:
+      context: .
+      dockerfile: RaceDay.MVC/Dockerfile
+    container_name: raceday-mvc
+    depends_on:
+      - api
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Containers reach each other by service name, never localhost
+      ApiSettings__BaseUrl: http://api:8080/
+    restart: unless-stopped
