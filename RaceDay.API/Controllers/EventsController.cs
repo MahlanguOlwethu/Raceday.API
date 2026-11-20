@@ -20,13 +20,36 @@ namespace RaceDayAPI.Controllers
             _blobService = blobService;
         }
 
+        // GET: api/events?search=&type=&from=&to=&upcomingOnly=
+        // Every filter is optional, so calling it with no query string still returns all events.
         [HttpGet]
         [AuthorizeRole("Organiser", "Participant")]
-        public async Task<IActionResult> GetAllEvents()
+        public async Task<IActionResult> GetAllEvents(
+            [FromQuery] string? search = null,
+            [FromQuery] string? type = null,
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null,
+            [FromQuery] bool upcomingOnly = false)
         {
-            var events = await _context.Events
-                .Include(e => e.Organiser)
-                .Include(e => e.Categories)
+            var query = _context.Events.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                // LIKE keeps the search case-insensitive on SQL Server and in the in-memory test database
+                var pattern = $"%{search.Trim()}%";
+                query = query.Where(e => EF.Functions.Like(e.Name, pattern) || EF.Functions.Like(e.Location, pattern));
+            }
+            if (!string.IsNullOrWhiteSpace(type))
+                query = query.Where(e => e.EventType == type);
+            if (upcomingOnly)
+                query = query.Where(e => e.EventDate >= DateTime.Today);
+            if (from.HasValue)
+                query = query.Where(e => e.EventDate >= from.Value.Date);
+            if (to.HasValue)
+                query = query.Where(e => e.EventDate < to.Value.Date.AddDays(1));
+
+            var events = await query
+                .OrderBy(e => e.EventDate)
                 .Select(e => new
                 {
                     e.EventId,
@@ -102,8 +125,13 @@ namespace RaceDayAPI.Controllers
                     e.DistanceKm,
                     e.EventType,
                     e.BannerImageUrl,
-                    CategoryCount = e.Categories.Count
+                    CategoryCount = e.Categories.Count,
+                    // Counts for the organiser dashboard; withdrawn (Cancelled) entries are excluded
+                    EnrolmentCount = e.Enrolments.Count(en => en.Status != "Cancelled"),
+                    ConfirmedCount = e.Enrolments.Count(en => en.Status == "Confirmed"),
+                    PendingCount = e.Enrolments.Count(en => en.Status == "Pending")
                 })
+                .OrderBy(e => e.EventDate)
                 .ToListAsync();
 
             return Ok(myEvents);
@@ -125,7 +153,14 @@ namespace RaceDayAPI.Controllers
                 var imageError = ImageUploadRules.Validate(BannerImage);
                 if (imageError != null) return BadRequest(new { message = imageError });
 
-                bannerUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
+                try
+                {
+                    bannerUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
+                }
+                catch (Exception ex) when (ex is BlobStorageNotConfiguredException || ex is Azure.RequestFailedException)
+                {
+                    return StatusCode(503, new { message = "The banner image could not be uploaded right now. Please try again later." });
+                }
             }
 
             var newEvent = new Event
@@ -174,7 +209,14 @@ namespace RaceDayAPI.Controllers
                 var imageError = ImageUploadRules.Validate(BannerImage);
                 if (imageError != null) return BadRequest(new { message = imageError });
 
-                existingEvent.BannerImageUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
+                try
+                {
+                    existingEvent.BannerImageUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
+                }
+                catch (Exception ex) when (ex is BlobStorageNotConfiguredException || ex is Azure.RequestFailedException)
+                {
+                    return StatusCode(503, new { message = "The banner image could not be uploaded right now. Please try again later." });
+                }
             }
 
             await _context.SaveChangesAsync();
