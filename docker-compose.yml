@@ -4,8 +4,9 @@
 # API + Swagger: http://localhost:5001/swagger
 #
 # Values come from a .env file next to this one (see .env.example). Every value has a
-# default, so the stack also starts without a .env; image uploads then return a friendly
-# "could not upload" message until AZURE_STORAGE_CONNECTION_STRING is set.
+# default, so the stack also starts without a .env.
+# Image uploads go to Azurite (the local Azure Storage emulator) unless
+# AZURE_STORAGE_CONNECTION_STRING in .env points to a real Azure Storage account.
 
 services:
   db:
@@ -41,7 +42,21 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:8080"
       ConnectionStrings__DefaultConnection: "Server=db,1433;Database=RaceDayDb;User Id=sa;Password=${SA_PASSWORD:-RaceDay!Local2026};TrustServerCertificate=True;"
-      AzureBlob__ConnectionString: ${AZURE_STORAGE_CONNECTION_STRING:-}
+      # Default = Azurite's well-known development account (public, not a secret)
+      AzureBlob__ConnectionString: ${AZURE_STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;}
+      # The API uploads to "azurite" (its name inside Docker), but the browser must load
+      # images from localhost. Has no effect when a real Azure account is used.
+      AzureBlob__PublicBaseUrl: http://localhost:10000/devstoreaccount1
+    restart: unless-stopped
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: raceday-azurite
+    ports:
+      - "10000:10000"
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --loose --skipApiVersionCheck --location /data
+    volumes:
+      - raceday-blobs:/data
     restart: unless-stopped
 
   mvc:
@@ -61,4 +76,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  raceday-blobs:
   raceday-sql:
