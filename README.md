@@ -10,11 +10,9 @@ category and track their results.
 | 2 | ASP.NET Core Web API (`RaceDay.API`) with EF Core, session auth, Swagger and xUnit tests (`RaceDay.API.Tests`) |
 | 3 | ASP.NET Core MVC app (`RaceDay.MVC`) that consumes the API, Azure Blob Storage, Docker |
 
-## Video presentations
+## Video presentation
 
-* Part 1: _add unlisted YouTube link_
-* Part 2: _add unlisted YouTube link_
-* Part 3: _add unlisted YouTube link_
+Unlisted YouTube video: _add link_
 
 ## Roles
 
@@ -37,7 +35,8 @@ docker compose up --build
 * API + Swagger: <http://localhost:5001/swagger>
 
 This starts SQL Server, the API (it applies migrations on start-up) and the MVC app. Stop it with `docker compose down`.
-For image uploads, copy `.env.example` to `.env` and set `AZURE_STORAGE_CONNECTION_STRING`.
+Image uploads work straight away using **Azurite**, the local Azure Storage emulator, which also runs in Docker.
+To use a real Azure Storage account instead, copy `.env.example` to `.env` and set `AZURE_STORAGE_CONNECTION_STRING`.
 
 ## Run locally
 
@@ -61,5 +60,10 @@ solution and the MVC project, and runs all unit tests on every push.
 
 ## AI tools disclosure
 
-AI assistance (Claude) was used in Part 3 to review the project against the brief and help with fixes to the API,
-MVC, Docker set-up, CI workflow and this README. All changes were reviewed, run and tested by me.
+Claude (an AI assistant) was used to:
+
+* correct my unit tests, which were not running;
+* make the related code changes needed to get the application working;
+* help write this README.
+
+I reviewed and tested all of these changes myself.
