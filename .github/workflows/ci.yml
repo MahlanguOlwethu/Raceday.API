@@ -5,6 +5,18 @@ on:
   pull_request:
 
 jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate /docs structure (Part 1)
+        run: |
+          test -d docs || { echo "Missing /docs folder"; exit 1; }
+          for f in docs/ERD.png docs/API_Endpoint_Plan.md docs/RaceDay_Database.sql; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+          echo "docs/ structure OK"
+
   build-and-test:
     runs-on: ubuntu-latest
     steps:
