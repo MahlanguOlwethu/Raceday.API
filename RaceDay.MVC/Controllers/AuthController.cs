@@ -53,12 +53,13 @@ namespace RaceDay.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> Logout()
         {
-            // Clear MVC session
-            HttpContext.Session.Clear();
-
-            // Tell the API to clear its session
+            // Tell the API to clear its session first: this needs the API cookie
+            // that is stored in the MVC session
             var client = _apiService.GetClient();
             await client.PostAsync("api/Auth/logout", null);
+
+            // Then clear the MVC session
+            HttpContext.Session.Clear();
 
             return RedirectToAction("Login");
         }
