@@ -21,24 +21,21 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = ".RaceDay.MVC.Session";
 });
 
+builder.Services.AddTransient<ApiSessionHandler>();
+
 // 5. Register HttpClient to talk to the API
 builder.Services.AddHttpClient("RaceDayAPI", client =>
 {
     // API base URL comes from configuration (Api:BaseUrl); defaults to the local dev API.
     client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7082/");
 })
-.ConfigurePrimaryHttpMessageHandler(() =>
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
-    return new HttpClientHandler
-    {
-        // UseCookies = true ensures that when the API sends a Session Cookie, 
-        // the MVC app stores it and sends it back on the next request automatically.
-        UseCookies = true,
-        CookieContainer = new System.Net.CookieContainer(),
-        // Ignore SSL certificate errors for localhost development
-        ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
-    };
-});
+    // Cookies are handled per user by ApiSessionHandler, not by a shared container
+    UseCookies = false,
+    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+})
+.AddHttpMessageHandler<ApiSessionHandler>();
 
 var app = builder.Build();
 
