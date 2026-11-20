@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
+using RaceDay.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,9 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     options.Cookie.Name = ".RaceDay.Session";
 });
+
+// 3. Register Blob Service for Azure Storage
+builder.Services.AddScoped<RaceDay.API.Services.BlobService>();
 
 var app = builder.Build();
 

@@ -3,8 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
 using RaceDay.API.Security;
-using RaceDay.API.Security;
-using System.Security.Claims;
+using RaceDay.API.Services;
 
 namespace RaceDayAPI.Controllers
 {
@@ -13,21 +12,21 @@ namespace RaceDayAPI.Controllers
     public class EventsController : ControllerBase
     {
         private readonly RaceDayDbContext _context;
+        private readonly BlobService _blobService;
 
-        public EventsController(RaceDayDbContext context)
+        public EventsController(RaceDayDbContext context, BlobService blobService)
         {
             _context = context;
+            _blobService = blobService;
         }
 
-        // GET: api/events
-        // Any logged-in user (Organiser or Participant) can view all events
         [HttpGet]
         [AuthorizeRole("Organiser", "Participant")]
         public async Task<IActionResult> GetAllEvents()
         {
             var events = await _context.Events
-                .Include(e => e.Organiser) // Include organiser details
-                .Include(e => e.Categories) // Include categories
+                .Include(e => e.Organiser)
+                .Include(e => e.Categories)
                 .Select(e => new
                 {
                     e.EventId,
@@ -46,8 +45,6 @@ namespace RaceDayAPI.Controllers
             return Ok(events);
         }
 
-        // GET: api/events/{id}
-        // Any logged-in user can view a specific event
         [HttpGet("{id}")]
         [AuthorizeRole("Organiser", "Participant")]
         public async Task<IActionResult> GetEvent(int id)
@@ -62,13 +59,10 @@ namespace RaceDayAPI.Controllers
             return Ok(ev);
         }
 
-        // GET: api/events/mine
-        // Only Organisers can see the events they created
         [HttpGet("mine")]
         [AuthorizeRole("Organiser")]
         public async Task<IActionResult> GetMyEvents()
         {
-            // Get the logged-in user's ID from the Session
             var userIdStr = HttpContext.Session.GetString("UserId");
             if (userIdStr == null) return Unauthorized();
             var organiserId = int.Parse(userIdStr);
@@ -81,15 +75,21 @@ namespace RaceDayAPI.Controllers
             return Ok(myEvents);
         }
 
-        // POST: api/events
-        // Only Organisers can create events
         [HttpPost]
         [AuthorizeRole("Organiser")]
-        public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto dto)
+        public async Task<IActionResult> CreateEvent([FromForm] CreateEventDto dto, IFormFile? BannerImage)
         {
             var userIdStr = HttpContext.Session.GetString("UserId");
             if (userIdStr == null) return Unauthorized();
             var organiserId = int.Parse(userIdStr);
+
+            string? bannerUrl = null;
+
+            // If an image was uploaded, send it to Azure Blob Storage
+            if (BannerImage != null && BannerImage.Length > 0)
+            {
+                bannerUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
+            }
 
             var newEvent = new Event
             {
@@ -100,6 +100,7 @@ namespace RaceDayAPI.Controllers
                 Location = dto.Location,
                 DistanceKm = dto.DistanceKm,
                 EventType = dto.EventType,
+                BannerImageUrl = bannerUrl,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -109,8 +110,6 @@ namespace RaceDayAPI.Controllers
             return StatusCode(201, new { message = "Event created successfully.", eventId = newEvent.EventId });
         }
 
-        // PUT: api/events/{id}
-        // Only the Organiser who created the event can edit it
         [HttpPut("{id}")]
         [AuthorizeRole("Organiser")]
         public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventDto dto)
@@ -122,7 +121,6 @@ namespace RaceDayAPI.Controllers
             var existingEvent = await _context.Events.FindAsync(id);
             if (existingEvent == null) return NotFound(new { message = "Event not found." });
 
-            // Check if the logged-in organiser is the one who created this event
             if (existingEvent.OrganiserId != organiserId)
                 return StatusCode(403, new { message = "You can only edit your own events." });
 
@@ -137,8 +135,6 @@ namespace RaceDayAPI.Controllers
             return Ok(new { message = "Event updated successfully." });
         }
 
-        // DELETE: api/events/{id}
-        // Only the Organiser who created it can delete it
         [HttpDelete("{id}")]
         [AuthorizeRole("Organiser")]
         public async Task<IActionResult> DeleteEvent(int id)
@@ -160,7 +156,6 @@ namespace RaceDayAPI.Controllers
         }
     }
 
-    // DTO to keep the API clean and prevent over-posting
     public class CreateEventDto
     {
         public string Name { get; set; } = string.Empty;
@@ -168,6 +163,6 @@ namespace RaceDayAPI.Controllers
         public DateTime EventDate { get; set; }
         public string Location { get; set; } = string.Empty;
         public decimal DistanceKm { get; set; }
-        public string EventType { get; set; } = string.Empty; // "Run", "Walk", or "Cycle"
+        public string EventType { get; set; } = string.Empty;
     }
 }
