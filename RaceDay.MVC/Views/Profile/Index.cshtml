@@ -52,6 +52,32 @@
                     </div>
                 </div>
 
+                <hr />
+                <h5 class="mb-3">Update my details</h5>
+                <form asp-action="UpdateProfile" method="post">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="FirstName" class="form-label">First name</label>
+                            <input asp-for="FirstName" class="form-control" maxlength="50" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="LastName" class="form-label">Last name</label>
+                            <input asp-for="LastName" class="form-control" maxlength="50" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">Phone number</label>
+                            <input asp-for="PhoneNumber" class="form-control" maxlength="20" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DateOfBirth" class="form-label">Date of birth</label>
+                            <input asp-for="DateOfBirth" type="date" class="form-control" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Save changes</button>
+                </form>
+
             </div>
         </div>
     </div>

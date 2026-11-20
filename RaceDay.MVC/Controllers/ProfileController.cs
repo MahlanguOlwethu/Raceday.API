@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RaceDay.MVC.Services;
 using RaceDay.MVC.ViewModels;
+using System.Text;
 using System.Text.Json;
 
 namespace RaceDay.MVC.Controllers
@@ -30,6 +31,38 @@ namespace RaceDay.MVC.Controllers
             }
 
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
+        {
+            if (!IsLoggedIn) return RedirectToAction("Login", "Auth");
+
+            if (string.IsNullOrWhiteSpace(model.FirstName) || string.IsNullOrWhiteSpace(model.LastName))
+            {
+                TempData["ErrorMessage"] = "First name and last name are required.";
+                return RedirectToAction("Index");
+            }
+
+            var client = _apiService.GetClient();
+            var payload = new
+            {
+                FirstName = model.FirstName.Trim(),
+                LastName = model.LastName.Trim(),
+                PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim(),
+                model.DateOfBirth
+            };
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await client.PutAsync("api/users/profile", content);
+
+            if (response.IsSuccessStatusCode)
+                TempData["SuccessMessage"] = "Profile updated successfully!";
+            else
+                TempData["ErrorMessage"] = "Your profile could not be updated. Please check your details and try again.";
+
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
