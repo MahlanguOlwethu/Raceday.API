@@ -28,6 +28,21 @@ builder.Services.AddScoped<RaceDay.API.Services.BlobService>();
 
 var app = builder.Build();
 
+// AUTOMATIC MIGRATIONS: Applies pending migrations on startup (great for Docker)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<RaceDayDbContext>();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -35,8 +50,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// FIXED: Commented out for Docker so it doesn't get stuck in an HTTP redirect loop
-// app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Commented out for Docker
 
 app.UseSession(); // Must be before Authorization
 app.UseAuthorization();
