@@ -87,7 +87,15 @@ namespace RaceDay.API.Controllers
             if (user == null) return NotFound();
 
             // Upload to a specific container for profile pictures
-            var imageUrl = await _blobService.UploadFileAsync(file, "profile-pictures");
+            string imageUrl;
+            try
+            {
+                imageUrl = await _blobService.UploadFileAsync(file, "profile-pictures");
+            }
+            catch (Exception ex) when (ex is BlobStorageNotConfiguredException || ex is Azure.RequestFailedException)
+            {
+                return StatusCode(503, new { message = "The picture could not be uploaded right now. Please try again later." });
+            }
 
             user.ProfilePictureUrl = imageUrl;
             await _context.SaveChangesAsync();
