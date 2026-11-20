@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RaceDay.API.Dtos;
+using Microsoft.AspNetCore.Mvc;
+using RaceDay.MVC.ViewModels;
 using RaceDay.MVC.Services;
 using System.Text;
 using System.Text.Json;
@@ -23,7 +23,7 @@ namespace RaceDay.MVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginDto dto)
+        public async Task<IActionResult> Login(LoginViewModel dto)
         {
             if (!ModelState.IsValid) return View(dto);
 
@@ -70,7 +70,7 @@ namespace RaceDay.MVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterDto dto)
+        public async Task<IActionResult> Register(RegisterViewModel dto)
         {
             if (!ModelState.IsValid) return View(dto);
 
