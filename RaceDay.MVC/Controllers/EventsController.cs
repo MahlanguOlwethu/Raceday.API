@@ -15,11 +15,25 @@ namespace RaceDay.MVC.Controllers
             _apiService = apiService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, string? type, DateTime? from, DateTime? to)
         {
             if (!IsLoggedIn) return RedirectToAction("Login", "Auth");
+
+            // Keep the filter values so the form shows what was searched
+            ViewBag.Search = search;
+            ViewBag.Type = type;
+            ViewBag.From = from?.ToString("yyyy-MM-dd");
+            ViewBag.To = to?.ToString("yyyy-MM-dd");
+
+            // Filtering is done by the API; only upcoming events are shown
+            var query = "api/events?upcomingOnly=true";
+            if (!string.IsNullOrWhiteSpace(search)) query += "&search=" + Uri.EscapeDataString(search);
+            if (!string.IsNullOrWhiteSpace(type)) query += "&type=" + Uri.EscapeDataString(type);
+            if (from.HasValue) query += "&from=" + from.Value.ToString("yyyy-MM-dd");
+            if (to.HasValue) query += "&to=" + to.Value.ToString("yyyy-MM-dd");
+
             var client = _apiService.GetClient();
-            var response = await client.GetAsync("api/events");
+            var response = await client.GetAsync(query);
 
             if (response.IsSuccessStatusCode)
             {
