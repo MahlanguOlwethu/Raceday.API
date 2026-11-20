@@ -9,7 +9,10 @@ namespace RaceDay.API.Services
 
         public BlobService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("AzureBlobStorage")!;
+            // FIXED: Reads Docker variable (AzureBlob:ConnectionString) OR local appsettings (AzureBlobStorage)
+            _connectionString = configuration["AzureBlob:ConnectionString"]
+                                ?? configuration.GetConnectionString("AzureBlobStorage")
+                                ?? throw new InvalidOperationException("Azure Blob connection string is missing.");
         }
 
         public async Task<string> UploadFileAsync(IFormFile file, string containerName)

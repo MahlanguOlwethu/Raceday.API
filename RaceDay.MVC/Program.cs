@@ -26,8 +26,11 @@ builder.Services.AddTransient<ApiSessionHandler>();
 // 5. Register HttpClient to talk to the API
 builder.Services.AddHttpClient("RaceDayAPI", client =>
 {
-    // API base URL comes from configuration (Api:BaseUrl); defaults to the local dev API.
-    client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7082/");
+    // FIXED: Reads Docker variable (ApiSettings:BaseUrl) OR local appsettings (Api:BaseUrl)
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+                  ?? builder.Configuration["Api:BaseUrl"]
+                  ?? "https://localhost:7082/";
+    client.BaseAddress = new Uri(baseUrl);
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
@@ -46,7 +49,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// FIXED: Commented out for Docker so it doesn't get stuck in an HTTP redirect loop
+// app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();

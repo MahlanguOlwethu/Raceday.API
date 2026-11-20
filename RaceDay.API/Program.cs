@@ -35,7 +35,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// FIXED: Commented out for Docker so it doesn't get stuck in an HTTP redirect loop
+// app.UseHttpsRedirection();
+
 app.UseSession(); // Must be before Authorization
 app.UseAuthorization();
 app.MapControllers();
