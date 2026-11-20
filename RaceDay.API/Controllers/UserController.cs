@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
+using RaceDay.API.Dtos;
 using RaceDay.API.Models;
 using RaceDay.API.Security;
 using RaceDay.API.Services;
@@ -49,6 +50,25 @@ namespace RaceDay.API.Controllers
                 user.ProfilePictureUrl,
                 Role = user.Role!.RoleName
             });
+        }
+
+        // PUT: api/users/profile
+        // Both roles can update their own profile details
+        [HttpPut("profile")]
+        [AuthorizeRole("Organiser", "Participant")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userId = GetLoggedInUserId();
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            user.FirstName = dto.FirstName;
+            user.LastName = dto.LastName;
+            user.PhoneNumber = dto.PhoneNumber;
+            user.DateOfBirth = dto.DateOfBirth;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Profile updated successfully." });
         }
 
         // POST: api/users/profile-picture
