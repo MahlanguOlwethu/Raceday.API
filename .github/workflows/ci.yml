@@ -12,7 +12,7 @@ jobs:
       - name: Validate /docs structure (Part 1)
         run: |
           test -d docs || { echo "Missing /docs folder"; exit 1; }
-          for f in docs/ERD.png docs/API_Endpoint_Plan.md docs/RaceDay_Database.sql; do
+          for f in docs/ERD.png docs/API_Endpoint_Plan.md docs/RaceDay_Database.sql README.md RaceDay.MVC/Dockerfile docker-compose.yml; do
             test -f "$f" || { echo "Missing required file: $f"; exit 1; }
           done
           echo "docs/ structure OK"
@@ -26,4 +26,6 @@ jobs:
           dotnet-version: 8.0.x
       - run: dotnet restore RaceDay.sln
       - run: dotnet build RaceDay.sln --no-restore -c Release
+      - name: Build MVC project (Part 3)
+        run: dotnet build RaceDay.MVC/RaceDay.MVC.csproj --no-restore -c Release
       - run: dotnet test RaceDay.sln --no-build -c Release --verbosity normal
