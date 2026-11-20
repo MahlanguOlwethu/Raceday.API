@@ -14,6 +14,11 @@ namespace RaceDay.MVC.ViewModels
         public string? BannerImageUrl { get; set; }
         public string OrganiserName { get; set; } = string.Empty;
         public int CategoryCount { get; set; }
+
+        // Returned by api/events/mine for the organiser dashboard
+        public int EnrolmentCount { get; set; }
+        public int ConfirmedCount { get; set; }
+        public int PendingCount { get; set; }
     }
 
     public class EventDetailsViewModel

@@ -1,0 +1,82 @@
+@model List<RaceDay.MVC.ViewModels.EventViewModel>
+@{
+    ViewData["Title"] = "Dashboard";
+    var upcoming = Model.Where(e => e.EventDate >= DateTime.Today).OrderBy(e => e.EventDate).ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Organiser Dashboard</h2>
+    <a asp-controller="Events" asp-action="Create" class="btn btn-primary">➕ Create New Event</a>
+</div>
+
+<!-- Summary cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center"><div class="card-body">
+            <h3 class="mb-0">@Model.Count</h3><small class="text-muted">Events created</small>
+        </div></div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center"><div class="card-body">
+            <h3 class="mb-0">@upcoming.Count</h3><small class="text-muted">Upcoming events</small>
+        </div></div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center"><div class="card-body">
+            <h3 class="mb-0">@Model.Sum(e => e.EnrolmentCount)</h3><small class="text-muted">Total enrolments</small>
+        </div></div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center"><div class="card-body">
+            <h3 class="mb-0 text-warning">@Model.Sum(e => e.PendingCount)</h3><small class="text-muted">Pending approval</small>
+        </div></div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">You haven't created any events yet.</div>
+}
+else
+{
+    <div class="table-responsive shadow-sm">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Event Name</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Enrolments</th>
+                    <th>Confirmed / Pending</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ev in Model.OrderBy(e => e.EventDate))
+                {
+                    var isUpcoming = ev.EventDate >= DateTime.Today;
+                    <tr>
+                        <td class="fw-bold">@ev.Name</td>
+                        <td>
+                            @ev.EventDate.ToString("dd MMM yyyy")
+                            @if (isUpcoming)
+                            {
+                                <span class="badge bg-info text-dark ms-1">Upcoming</span>
+                            }
+                        </td>
+                        <td>@ev.Location</td>
+                        <td><span class="badge bg-primary">@ev.EnrolmentCount</span></td>
+                        <td>
+                            <span class="badge bg-success">@ev.ConfirmedCount</span>
+                            <span class="badge bg-warning text-dark">@ev.PendingCount</span>
+                        </td>
+                        <td class="text-end">
+                            <a asp-controller="Enrolments" asp-action="ManageEnrolments" asp-route-eventId="@ev.EventId" class="btn btn-sm btn-outline-info">Enrolments</a>
+                            <a asp-controller="Results" asp-action="ManageResults" asp-route-eventId="@ev.EventId" class="btn btn-sm btn-outline-warning">Results</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
