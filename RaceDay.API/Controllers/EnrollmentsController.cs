@@ -42,10 +42,20 @@ namespace RaceDay.API.Controllers
                 return BadRequest(new { message = "Invalid category. The category does not exist or does not belong to this event." });
 
             // 3. Check if the participant is already enrolled in this event
-            var alreadyEnrolled = await _context.Enrolments
-                .AnyAsync(e => e.EventId == eventId && e.ParticipantId == participantId);
-            if (alreadyEnrolled)
+            var existing = await _context.Enrolments
+                .FirstOrDefaultAsync(e => e.EventId == eventId && e.ParticipantId == participantId);
+            if (existing != null && existing.Status != "Cancelled")
                 return Conflict(new { message = "You are already enrolled in this event." });
+
+            // A previously withdrawn (Cancelled) enrolment is reactivated, because (EventId, ParticipantId) is unique
+            if (existing != null)
+            {
+                existing.CategoryId = dto.CategoryId;
+                existing.Status = "Pending";
+                existing.EnrolmentDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return StatusCode(201, new { message = "Successfully enrolled in the event.", enrolmentId = existing.EnrolmentId });
+            }
 
             // 4. Create the enrolment
             var newEnrolment = new Enrolment
