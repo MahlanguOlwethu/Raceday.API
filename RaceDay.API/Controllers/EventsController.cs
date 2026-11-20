@@ -49,10 +49,33 @@ namespace RaceDayAPI.Controllers
         [AuthorizeRole("Organiser", "Participant")]
         public async Task<IActionResult> GetEvent(int id)
         {
+            // Project to an anonymous type so entity cycles (Event -> Categories -> Event)
+            // are never serialised and the organiser's password hash is never exposed.
             var ev = await _context.Events
-                .Include(e => e.Organiser)
-                .Include(e => e.Categories)
-                .FirstOrDefaultAsync(e => e.EventId == id);
+                .Where(e => e.EventId == id)
+                .Select(e => new
+                {
+                    e.EventId,
+                    e.OrganiserId,
+                    e.Name,
+                    e.Description,
+                    e.EventDate,
+                    e.Location,
+                    e.DistanceKm,
+                    e.EventType,
+                    e.BannerImageUrl,
+                    OrganiserName = e.Organiser!.FirstName + " " + e.Organiser.LastName,
+                    Categories = e.Categories.Select(c => new
+                    {
+                        c.CategoryId,
+                        c.Name,
+                        c.CategoryType,
+                        c.MinAge,
+                        c.MaxAge,
+                        c.DistanceKm
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
             if (ev == null) return NotFound(new { message = "Event not found." });
 
@@ -69,7 +92,18 @@ namespace RaceDayAPI.Controllers
 
             var myEvents = await _context.Events
                 .Where(e => e.OrganiserId == organiserId)
-                .Include(e => e.Categories)
+                .Select(e => new
+                {
+                    e.EventId,
+                    e.Name,
+                    e.Description,
+                    e.EventDate,
+                    e.Location,
+                    e.DistanceKm,
+                    e.EventType,
+                    e.BannerImageUrl,
+                    CategoryCount = e.Categories.Count
+                })
                 .ToListAsync();
 
             return Ok(myEvents);
@@ -112,7 +146,7 @@ namespace RaceDayAPI.Controllers
 
         [HttpPut("{id}")]
         [AuthorizeRole("Organiser")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventDto dto)
+        public async Task<IActionResult> UpdateEvent(int id, [FromForm] CreateEventDto dto, IFormFile? BannerImage)
         {
             var userIdStr = HttpContext.Session.GetString("UserId");
             if (userIdStr == null) return Unauthorized();
@@ -131,6 +165,12 @@ namespace RaceDayAPI.Controllers
             existingEvent.DistanceKm = dto.DistanceKm;
             existingEvent.EventType = dto.EventType;
 
+            // Only replace the banner when a new image is supplied; otherwise keep the existing one
+            if (BannerImage != null && BannerImage.Length > 0)
+            {
+                existingEvent.BannerImageUrl = await _blobService.UploadFileAsync(BannerImage, "event-banners");
+            }
+
             await _context.SaveChangesAsync();
             return Ok(new { message = "Event updated successfully." });
         }
@@ -148,6 +188,11 @@ namespace RaceDayAPI.Controllers
 
             if (existingEvent.OrganiserId != organiserId)
                 return StatusCode(403, new { message = "You can only delete your own events." });
+
+            // Enrolments are protected by a Restrict foreign key, so refuse cleanly instead of failing with a 500
+            var hasEnrolments = await _context.Enrolments.AnyAsync(e => e.EventId == id);
+            if (hasEnrolments)
+                return Conflict(new { message = "Cannot delete this event because participants are already enrolled." });
 
             _context.Events.Remove(existingEvent);
             await _context.SaveChangesAsync();
