@@ -21,9 +21,9 @@ Organiser endpoints that touch an event also check the event belongs to the logg
 ## Events
 | HTTP Method | Route | Description | Role Required | Request Body | Expected Response |
 |---|---|---|---|---|---|
-| GET | /api/events | Lists all events. | Any | None | 200 OK – event list; 401 Unauthorized |
+| GET | /api/events | Lists events. Optional filters: search, type, from, to, upcomingOnly. | Any | None | 200 OK – event list; 401 Unauthorized |
 | GET | /api/events/{id} | Returns one event with its categories. | Any | None | 200 OK; 401; 404 Not Found |
-| GET | /api/events/mine | Lists events created by the logged-in Organiser. | Organiser | None | 200 OK; 401; 403 Forbidden |
+| GET | /api/events/mine | Lists events created by the logged-in Organiser, with enrolment counts for the dashboard. | Organiser | None | 200 OK; 401; 403 Forbidden |
 | POST | /api/events | Creates an event (optional banner image). | Organiser | { name, description, eventDate, location, distanceKm, eventType (Run/Walk/Cycle), bannerImage? } | 201 Created – eventId; 400; 401; 403 |
 | PUT | /api/events/{id} | Updates one of the Organiser's own events; an optional new banner image replaces the old one. | Organiser | multipart form: { name, description, eventDate, location, distanceKm, eventType, bannerImage? } | 200 OK; 401; 403 – not your event; 404 |
 | DELETE | /api/events/{id} | Deletes one of the Organiser's own events (categories cascade). | Organiser | None | 204 No Content; 401; 403; 404; 409 Conflict – participants enrolled |
