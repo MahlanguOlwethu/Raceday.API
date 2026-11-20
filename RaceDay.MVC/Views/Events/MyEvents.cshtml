@@ -16,6 +16,14 @@
     </div>
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 @if (!Model.Any())
 {
     <div class="alert alert-info">You haven't created any events yet.</div>
@@ -42,6 +50,13 @@ else
                         <td>@ev.Location</td>
                         <td><span class="badge bg-info text-dark">@ev.CategoryCount</span></td>
                         <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@ev.EventId" class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@ev.EventId" method="post" class="d-inline"
+                                  onsubmit="return confirm('Delete this event? This cannot be undone.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
                             <a asp-controller="Categories" asp-action="Manage" asp-route-eventId="@ev.EventId" class="btn btn-sm btn-outline-primary">
                                 Categories
                             </a>

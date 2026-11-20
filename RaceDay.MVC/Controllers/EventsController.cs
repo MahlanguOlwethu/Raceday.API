@@ -79,7 +79,97 @@ namespace RaceDay.MVC.Controllers
             var client = _apiService.GetClient();
 
             // We must use MultipartFormDataContent to send files to the API
-            using var content = new MultipartFormDataContent();
+            using var content = BuildEventContent(model);
+
+            var response = await client.PostAsync("api/events", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Event created successfully!";
+                return RedirectToAction("MyEvents");
+            }
+
+            ModelState.AddModelError("", "Failed to create event. Please try again.");
+            return View(model);
+        }
+
+        // GET: Events/Edit/5
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (CurrentUserRole != "Organiser") return RedirectToAction("Index", "Home");
+
+            var client = _apiService.GetClient();
+            var response = await client.GetAsync($"api/events/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "That event could not be loaded.";
+                return RedirectToAction("MyEvents");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var ev = JsonSerializer.Deserialize<EventDetailsViewModel>(json, options);
+            if (ev == null) return RedirectToAction("MyEvents");
+
+            return View(new EditEventViewModel
+            {
+                EventId = ev.EventId,
+                Name = ev.Name,
+                Description = ev.Description,
+                EventDate = ev.EventDate,
+                Location = ev.Location,
+                DistanceKm = ev.DistanceKm,
+                EventType = ev.EventType,
+                ExistingBannerUrl = ev.BannerImageUrl
+            });
+        }
+
+        // POST: Events/Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(EditEventViewModel model)
+        {
+            if (CurrentUserRole != "Organiser") return RedirectToAction("Index", "Home");
+            if (!ModelState.IsValid) return View(model);
+
+            var client = _apiService.GetClient();
+            using var content = BuildEventContent(model);
+
+            var response = await client.PutAsync($"api/events/{model.EventId}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Event updated successfully!";
+                return RedirectToAction("MyEvents");
+            }
+
+            ModelState.AddModelError("", "Failed to update event. Please try again.");
+            return View(model);
+        }
+
+        // POST: Events/Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (CurrentUserRole != "Organiser") return RedirectToAction("Index", "Home");
+
+            var client = _apiService.GetClient();
+            var response = await client.DeleteAsync($"api/events/{id}");
+
+            if (response.IsSuccessStatusCode)
+                TempData["SuccessMessage"] = "Event deleted.";
+            else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                TempData["ErrorMessage"] = "This event can't be deleted because participants have already enrolled.";
+            else
+                TempData["ErrorMessage"] = "The event could not be deleted.";
+
+            return RedirectToAction("MyEvents");
+        }
+
+        private static MultipartFormDataContent BuildEventContent(CreateEventViewModel model)
+        {
+            var content = new MultipartFormDataContent();
 
             content.Add(new StringContent(model.Name), "Name");
             content.Add(new StringContent(model.Description), "Description");
@@ -95,16 +185,7 @@ namespace RaceDay.MVC.Controllers
                 content.Add(fileContent, "BannerImage", model.BannerImage.FileName);
             }
 
-            var response = await client.PostAsync("api/events", content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Event created successfully!";
-                return RedirectToAction("MyEvents");
-            }
-
-            ModelState.AddModelError("", "Failed to create event. Please try again.");
-            return View(model);
+            return content;
         }
     }
 }

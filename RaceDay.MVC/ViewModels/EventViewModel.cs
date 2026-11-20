@@ -50,6 +50,12 @@ namespace RaceDay.MVC.ViewModels
         public IFormFile? BannerImage { get; set; }
     }
 
+    public class EditEventViewModel : CreateEventViewModel
+    {
+        public int EventId { get; set; }
+        public string? ExistingBannerUrl { get; set; }
+    }
+
     public class CreateCategoryViewModel
     {
         public string Name { get; set; } = string.Empty;
@@ -73,6 +79,7 @@ namespace RaceDay.MVC.ViewModels
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
+        public DateTime? DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public IFormFile? ProfilePictureFile { get; set; }
     }
